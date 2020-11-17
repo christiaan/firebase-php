@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Kreait\Firebase\Tests\Integration\Auth;
 
 use Kreait\Firebase\Auth\CustomTokenViaGoogleIam;
+use Kreait\Firebase\Auth\TenantId;
 use Kreait\Firebase\Exception\AuthException;
 use Kreait\Firebase\Tests\IntegrationTestCase;
 use PHPUnit\Framework\AssertionFailedError;
@@ -51,5 +52,22 @@ class CustomTokenViaGoogleIamTest extends IntegrationTestCase
             echo \get_class($e);
             $this->fail('An '.AuthException::class.' should have been thrown');
         }
+    }
+
+    public function testCreateCustomTokenWithATenantId(): void
+    {
+        if (!self::$serviceAccount) {
+            $this->markTestSkipped('The integration tests require credentials');
+        }
+
+        $generator = new CustomTokenViaGoogleIam(
+            self::$serviceAccount->getClientEmail(),
+            self::$factory->createApiClient(),
+            TenantId::fromString($tenantId = 'FirstTenant-fqqqc')
+        );
+
+        $customToken = $generator->createCustomToken('some-uid');
+
+        $this->assertSame($tenantId, $customToken->getClaim('tenantId'));
     }
 }
